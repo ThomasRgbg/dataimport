@@ -5,7 +5,7 @@ import datetime
 import time
 
 from influxdb_cli2.influxdb_cli2 import influxdb_cli2
-from wetterdienst.wetterdienst_influxdb import wetterdienst_get
+from wetterdienst_get.wetterdienst_influxdb import wetterdienst_get
 
 from config_data import *
 
