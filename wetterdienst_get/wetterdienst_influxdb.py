@@ -1,16 +1,16 @@
 
-from numpy import datetime64, timedelta64, isnan
+#from numpy import datetime64, timedelta64, isnan
 import datetime
 
 from wetterdienst.provider.dwd.mosmix import DwdMosmixRequest, DwdMosmixType
 from wetterdienst import Settings
 
 
-def convert_dt64_to_dt(dt64):
-    unix_epoch = datetime64(0, 's')
-    one_second = timedelta64(1, 's')
-    seconds_since_epoch = (dt64 - unix_epoch) / one_second
-    return datetime.datetime.utcfromtimestamp(seconds_since_epoch)
+#def convert_dt64_to_dt(dt64):
+    #unix_epoch = datetime64(0, 's')
+    #one_second = timedelta64(1, 's')
+    #seconds_since_epoch = (dt64 - unix_epoch) / one_second
+    #return datetime.datetime.utcfromtimestamp(seconds_since_epoch)
 
 
 def wetterdienst_get(influxdb):
@@ -38,51 +38,54 @@ def wetterdienst_get(influxdb):
             # print(response.df["parameter"].values[i])
             # continue
             
-            value = response.df["value"].values[i] 
+            value = response.df["value"][i]
 
-            if isnan(value):
+            if not value:
                 continue
+            #if isnan(value):
+            #    continue
 
-            date = response.df["date"].values[i]
-            if response.df["station_id"].values[i] == "10776":
+            date = response.df["date"][i]
+
+            if response.df["station_id"][i] == "10776":
                 location = "weatherforcast"
-            elif response.df["station_id"].values[i] == "P551":
+            elif response.df["station_id"][i] == "P551":
                 location = "weatherforcast_langquaid"
-            elif response.df["station_id"].values[i] == "P460":
+            elif response.df["station_id"][i] == "P460":
                 location = "weatherforcast_hagelstadt"
-            elif response.df["station_id"].values[i] == "P366":
+            elif response.df["station_id"][i] == "P366":
                 location = "weatherforcast_schwandorf"
-            elif response.df["station_id"].values[i] == "P441":
+            elif response.df["station_id"][i] == "P441":
                 location = "weatherforcast_parsberg"
-            elif response.df["station_id"].values[i] == "P449":
+            elif response.df["station_id"][i] == "P449":
                 location = "weatherforcast_kelheim"
-            elif response.df["station_id"].values[i] == "N0680":
+            elif response.df["station_id"][i] == "N0680":
                 location = "weatherforcast_germersheim"
             else:
                 continue
             
-            if response.df["parameter"].values[i] == 'temperature_air_mean_200':
-                influxdb.write_sensordata(location, "temperature_2m", value - 273.15, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'temperature_air_mean_200':
+                influxdb.write_sensordata(location, "temperature_2m", value - 273.15, date)
 
-            if response.df["parameter"].values[i] == 'wind_speed':
-                influxdb.write_sensordata(location, "windspeed", value * 3.6, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'wind_speed':
+                influxdb.write_sensordata(location, "windspeed", value * 3.6, date)
 
-            if response.df["parameter"].values[i] == 'precipitation_height_significant_weather_last_1h':
-                influxdb.write_sensordata(location, "rain", value, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'precipitation_height_significant_weather_last_1h':
+                influxdb.write_sensordata(location, "rain", value, date)
 
-            if response.df["parameter"].values[i] == 'cloud_cover_effective':
-                influxdb.write_sensordata(location, "cloudcover", value, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'cloud_cover_effective':
+                influxdb.write_sensordata(location, "cloudcover", value, date)
 
-            if response.df["parameter"].values[i] == 'sunshine_duration':
-                influxdb.write_sensordata(location, "sunshine", value, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'sunshine_duration':
+                influxdb.write_sensordata(location, "sunshine", value, date)
 
-            if response.df["parameter"].values[i] == 'radiation_global':
-                influxdb.write_sensordata(location, "radiation_all", value, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'radiation_global':
+                influxdb.write_sensordata(location, "radiation_all", value, date)
 
-            if response.df["parameter"].values[i] == 'visibility_range':
-                influxdb.write_sensordata(location, "visibility", value, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'visibility_range':
+                influxdb.write_sensordata(location, "visibility", value, date)
 
-            if response.df["parameter"].values[i] == 'probability_fog_last_1h':
-                influxdb.write_sensordata(location, "propability_fog", value, convert_dt64_to_dt(date))
+            if response.df["parameter"][i] == 'probability_fog_last_1h':
+                influxdb.write_sensordata(location, "propability_fog", value, date)
 
     print("Done")
