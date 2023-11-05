@@ -28,7 +28,7 @@ def wetterdienst_get(influxdb):
 
     for response in stations.values.query():
 
-        print(dir(response))
+        # print(dir(response))
         print(response)
 
     # next2days = response.df[0:48]
@@ -88,4 +88,4 @@ def wetterdienst_get(influxdb):
             if response.df["parameter"][i] == 'probability_fog_last_1h':
                 influxdb.write_sensordata(location, "propability_fog", value, date)
 
-    print("Done")
+    # print("Done")
