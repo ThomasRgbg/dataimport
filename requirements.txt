@@ -3,9 +3,6 @@ influxdb-client
 # grid-tibber
 pyTibber
 
-# wetterdienst_get
-wetterdienst
-
 # solcast
 pysolcast
 
