@@ -13,6 +13,9 @@ influxdb = influxdb_cli2(influxdb_url, influxdb_token, influxdb_org, influxdb_bu
 
 while True:
 
-    solcast_get(solcast_api_key, solcast_resource_id, influxdb)
+    try:
+        solcast_get(solcast_api_key, solcast_resource_id, influxdb)
+    except pysolcast.exceptions.RateLimitExceeded:
+        time.sleep(4 * 60 * 60)
     
     time.sleep(2 * 60 * 60)
