@@ -54,7 +54,7 @@ def get_predicted_power(mode=None):
 
 def get_collected_power(mode=None):
     if mode == "today":
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         end = now
     else:
@@ -96,6 +96,21 @@ def get_collected_power(mode=None):
 
     return (stop1-start1), (stop2-start2), (stop1-start1) + (stop2-start2)
 
+def get_house_demand_pwr():
+    now = datetime.datetime.now()
+    pwr = 0.2 * (24-(now.hour + (now.minute/60)))
+    return pwr*1000
+
+def get_battery_demand_pwr():
+    now = datetime.datetime.utcnow()
+    results = influxdb.query_data('pv_fronius', 'Battery_SoC', now + datetime.timedelta(minutes=-2), now)
+    if results == []:
+        return 0
+    elif results:
+        return float(results[-1][3]) * 11 * 10    # 11Kwh Battery * /100 * 1kW 
+    else:
+        return 0
+
 while(True):
 
     pwr, lenght, values = get_predicted_power('today')
@@ -106,6 +121,15 @@ while(True):
     influxdb.write_sensordata(influxdb_table, 'prediction_today', pwr, force=False)
     influxdb.write_sensordata(influxdb_table, 'prediction_remaining', pwr_remaining, force=False)
     influxdb.write_sensordata(influxdb_table, 'generated_today', mppt_both, force=False)
+
+    house = get_house_demand_pwr()
+    battery = get_battery_demand_pwr()
+    all_demand = house + battery
+
+    influxdb.write_sensordata(influxdb_table, 'demand_house', house, force=False)
+    influxdb.write_sensordata(influxdb_table, 'demand_battery', battery, force=False)
+    influxdb.write_sensordata(influxdb_table, 'demand_all', all_demand, force=False)
+
 
     time.sleep(30*60)
     
