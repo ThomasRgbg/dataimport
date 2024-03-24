@@ -107,7 +107,7 @@ def get_battery_demand_pwr():
     if results == []:
         return 0
     elif results:
-        return float(results[-1][3]) * 11 * 10    # 11Kwh Battery * /100 * 1kW 
+        return (100.0-float(results[-1][3])) * 11 * 10    # 11Kwh Battery * /100 * 1kW 
     else:
         return 0
 
