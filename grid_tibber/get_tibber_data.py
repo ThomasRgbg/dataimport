@@ -57,7 +57,7 @@ class get_tibber_data:
         
     async def main(self):
         async with aiohttp.ClientSession() as session:
-            tibber_connection = tibber.Tibber(self.apikey, websession=session, user_agent="pyTibber/0.26.11")
+            tibber_connection = tibber.Tibber(self.apikey, websession=session, user_agent="my_pyTibber_useage")
             await tibber_connection.update_info()
             print(tibber_connection.name)
             home = tibber_connection.get_homes()[0]
