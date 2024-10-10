@@ -8,7 +8,7 @@ from influxdb_cli2.influxdb_cli2 import influxdb_cli2
 from config_data import *
 
 
-influxdb = influxdb_cli2(influxdb_url, influxdb_token, org=influxdb_org, bucket=influxdb_bucket) # debug=args.debug
+influxdb = influxdb_cli2(influxdb_url, influxdb_token, org=influxdb_org, bucket=influxdb_bucket) # debug=True
 influxdb_table = 'pv_prediction'
 
 def get_predicted_power(mode=None):
@@ -54,13 +54,13 @@ def get_predicted_power(mode=None):
 
 def get_collected_power(mode=None):
     if mode == "today":
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(tz=datetime.UTC)
         start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         end = now
     else:
         return 0
         
-    results = influxdb.query_data('pv_fronius', 'MPPT_1_DC_Energy', start, start + datetime.timedelta(minutes=1))
+    results = influxdb.query_data('pv_fronius', 'MPPT_1_DC_Energy', start, start + datetime.timedelta(minutes=10))
     if results == []:
         return 0, 0, 0
     elif results:
@@ -77,7 +77,7 @@ def get_collected_power(mode=None):
     else:
         return 0, 0, 0
 
-    results = influxdb.query_data('pv_fronius', 'MPPT_2_DC_Energy', start, start + datetime.timedelta(minutes=1))
+    results = influxdb.query_data('pv_fronius', 'MPPT_2_DC_Energy', start, start + datetime.timedelta(minutes=10))
     if results == []:
         return 0, 0, 0
     elif results:
@@ -98,11 +98,11 @@ def get_collected_power(mode=None):
 
 def get_house_demand_pwr():
     now = datetime.datetime.now()
-    pwr = 0.2 * (24-(now.hour + (now.minute/60)))
+    pwr = 0.25 * (24-(now.hour + (now.minute/60)))
     return pwr*1000
 
 def get_battery_demand_pwr():
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(tz=datetime.UTC)
     results = influxdb.query_data('pv_fronius', 'Battery_SoC', now + datetime.timedelta(minutes=-2), now)
     if results == []:
         return 0
@@ -111,26 +111,47 @@ def get_battery_demand_pwr():
     else:
         return 0
 
-while(True):
-
-    pwr, lenght, values = get_predicted_power('today')
-    pwr_remaining, lenght, values = get_predicted_power('remaining')
-
-    mppt1, mppt2, mppt_both = get_collected_power('today')
-
-    influxdb.write_sensordata(influxdb_table, 'prediction_today', pwr, force=False)
-    influxdb.write_sensordata(influxdb_table, 'prediction_remaining', pwr_remaining, force=False)
-    influxdb.write_sensordata(influxdb_table, 'generated_today', mppt_both, force=False)
-
-    house = get_house_demand_pwr()
-    battery = get_battery_demand_pwr()
-    all_demand = house + battery
-
-    influxdb.write_sensordata(influxdb_table, 'demand_house', house, force=False)
-    influxdb.write_sensordata(influxdb_table, 'demand_battery', battery, force=False)
-    influxdb.write_sensordata(influxdb_table, 'demand_all', all_demand, force=False)
-
-
-    time.sleep(30*60)
     
-#
+
+if __name__ == "__main__":
+    import argparse
+    import time
+
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("-d", "--debug", help="debug mode with output", action='store_true')
+    argparser.add_argument("-r", "--read-only", help="read-only, do not update database", action='store_true')
+    args = argparser.parse_args()
+
+    while(True):
+
+        pwr, lenght, values = get_predicted_power('today')
+        pwr_remaining, lenght, values = get_predicted_power('remaining')
+
+        mppt1, mppt2, mppt_both = get_collected_power('today')
+
+        if args.debug:
+            print("mppt1 {0}, mppt2 {1}, mppt_both {2}".format(mppt1,mppt2,mppt_both))
+            print("pwr {0}, pwr_remaining {1}".format(pwr,pwr_remaining))
+
+        if not args.read_only:
+            influxdb.write_sensordata(influxdb_table, 'prediction_today', pwr, force=False)
+            influxdb.write_sensordata(influxdb_table, 'prediction_remaining', pwr_remaining, force=False)
+            influxdb.write_sensordata(influxdb_table, 'generated_today', mppt_both, force=False)
+
+        house = get_house_demand_pwr()
+        battery = get_battery_demand_pwr()
+        all_demand = house + battery
+
+
+        if args.debug:
+            print("demand_house {0}, demand_battery {1}, demand_all {2}".format(house,battery,all_demand))
+
+        if not args.read_only:
+            influxdb.write_sensordata(influxdb_table, 'demand_house', house, force=False)
+            influxdb.write_sensordata(influxdb_table, 'demand_battery', battery, force=False)
+            influxdb.write_sensordata(influxdb_table, 'demand_all', all_demand, force=False)
+
+
+        time.sleep(30*60)
+
+
