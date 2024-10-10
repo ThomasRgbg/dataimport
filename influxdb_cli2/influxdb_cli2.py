@@ -1,3 +1,9 @@
+# 
+# V1 Something to start with...
+# V2 Handle force parameter better
+# V3 Remove timezone information and convert to UTC... 
+#
+
 import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS, ASYNCHRONOUS
 
@@ -21,7 +27,7 @@ class influxdb_cli2:
         if self.debug:
             print("Got sample: location: {0}, measurement: {1}, value {2}, timestamp {3}".format(location,measurement,value, timestamp))
 
-        if force == None:
+        if force == None or force == False:
             if float(value) == 0.0:
                 if self.debug:
                     print("discarding value, since zero")
@@ -45,12 +51,14 @@ class influxdb_cli2:
 
 
     # working query
-    # from(bucket: "pentling/autogen")
+    # from(bucket: "home/autogen")
     #  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)
     #  |> filter(fn: (r) => r._measurement == "Battery_Power" and r.location == "pv_fronius")
 
     def query_data(self, location, measurement, start_date, end_date):
+        start_date = start_date.replace(tzinfo=None)
         start_date = start_date.isoformat(sep='T', timespec='seconds')
+        end_date = end_date.replace(tzinfo=None)
         end_date = end_date.isoformat(sep='T', timespec='seconds')
         query_api = self.influxdb_client.query_api()
         query = 'from(bucket: "{0}")\
