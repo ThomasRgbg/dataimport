@@ -5,7 +5,7 @@ import time
 
 from pysolcast.rooftop import RooftopSite
 
-def solcast_get(api_key, resource_id, influxdb): 
+def solcast_get(api_key, resource_id, influxdb, db_location): 
 
     site = RooftopSite(api_key, resource_id)
 
@@ -21,9 +21,9 @@ def solcast_get(api_key, resource_id, influxdb):
         
         print(dt_timestamp, pv_estimate)
     
-        influxdb.write_sensordata('solcast', 'pv_estimate', forecast['pv_estimate']*1000, dt_timestamp)
-        influxdb.write_sensordata('solcast', 'pv_estimate10', forecast['pv_estimate10']*1000, dt_timestamp)
-        influxdb.write_sensordata('solcast', 'pv_estimate90', forecast['pv_estimate90']*1000, dt_timestamp)
+        influxdb.write_sensordata('solcast', str(db_location), forecast['pv_estimate']*1000, dt_timestamp)
+        influxdb.write_sensordata('solcast', str(db_location)+'10', forecast['pv_estimate10']*1000, dt_timestamp)
+        influxdb.write_sensordata('solcast', str(db_location)+'90', forecast['pv_estimate90']*1000, dt_timestamp)
 
     # Delay to get DB action executed.    
     time.sleep(5)
