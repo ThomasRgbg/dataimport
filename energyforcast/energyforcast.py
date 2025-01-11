@@ -73,7 +73,7 @@ class Energyforecast:
 
     async def _fetch_data(self, url):
         async with self._session.get(
-            url, params={"token": self._token, "fixed_cost_cent": 13.22, "vat": 19}
+            url, params={"token": self._token, "fixed_cost_cent": 14.35, "vat": 19}
         ) as resp:
             resp.raise_for_status()
             return await resp.json()
