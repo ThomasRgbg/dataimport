@@ -61,8 +61,9 @@ class get_tibber_data:
             await tibber_connection.update_info()
             print(tibber_connection.name)
             home = tibber_connection.get_homes()[0]
+            print(dir(home))
             await home.update_info()
-            await home.update_price_info()
+            await home.update_info_and_price_info()
             #if not home.rt_subscription_running:
             await home.rt_subscribe(self._callback)
 
